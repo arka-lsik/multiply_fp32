@@ -75,6 +75,9 @@ The FSM is controlled by:
 
 All stage actions are performed inside a single sequential always block using `case(counter)`.
 
+
+**Note:** all rounding, shifting, and exponent-arithmetic registers used internally should be sized with at least one extra bit of headroom beyond their nominal IEEE-754 field width (e.g. mantissa-increment results, carry-detection bits, and any narrowed/biased exponent fields). Under-sized registers can silently truncate or wrap around during intermediate computation, producing incorrect results without any simulation or synthesis error.
+
 ### Stage 1 — Unpack
 - Extract mantissas into 24-bit regs (initially `{1'b0, frac}`).
 - Convert biased exponent into unbiased form: `exp - 127`.
@@ -114,10 +117,12 @@ This stage performs:
    - Shifts mantissa right and accumulates shifted-out bits into sticky.
 2. **Normalize** if MSB missing:
    - Left-shifts mantissa while adjusting exponent, carrying guard into LSB.
+   - If the shift amount required to align to exponent -126 meets or exceeds the mantissa width (i.e. the true product is too small to represent even as a denormal), the mantissa must become exactly zero and the sticky bit must be set to 1. The final packed result in Stage 7 must then be an exact zero (correct sign, zero exponent field, zero fraction) — this case occurs even when multiplying two ordinary normal numbers whose product underflows completely, not just with denormal inputs.
 3. **RNE rounding**:
    - If `G == 1` and `(R || S || LSB)` then increment mantissa.
    - Handles carry-out from rounding:
      - If rounding overflows mantissa, set mantissa to 0x800000 and increment exponent.
+   - Compute the incremented mantissa in a register at least 25 bits wide so the carry-out bit is directly observable (e.g. bit 24 of a 25-bit sum). Do not detect this overflow by comparing the mantissa to an all-1s pattern before incrementing, and do not check a bit index beyond the width of a 24-bit register — both approaches will silently fail to detect the carry.
 
 ### Stage 7 — Pack
 - For normal path:
@@ -125,6 +130,9 @@ This stage performs:
   - If exponent indicates overflow -> output INF.
   - If exponent indicates exact denorm boundary -> force exponent field to 0 (denormal/zero representation).
 - Asserts `out_valid` for one cycle and clears `busy`.
+  - **All overflow and underflow checks must be performed on the full-width signed exponent `z_e` (the 10-bit signed register), not on an already-narrowed 8-bit biased exponent.** Narrowing `z_e + 127` into an 8-bit field before checking its range can silently wrap around for extreme exponent values, causing genuine overflow/underflow cases to be misclassified as normal.
+  - If `z_e` (checked in its full signed width) indicates overflow -> output INF.
+  - If `z_e` (checked in its full signed width) indicates exact denorm boundary -> force exponent field to 0 (denormal/zero representation).
 
 ---
 
