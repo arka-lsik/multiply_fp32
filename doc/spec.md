@@ -13,6 +13,8 @@ This design currently targets:
 
 ## Interface
 
+**The top-level module name must remain exactly `fmultiplier`**, matching the provided skeleton file exactly. The requirement that the output file be named `multiply_fp32.sv` refers only to the filename on disk — it does NOT mean the module identifier inside the file should be renamed. Do not change `module fmultiplier(...)` to any other name (e.g. `module multiply_fp32(...)`); doing so will break instantiation in the hidden testbench.
+
 ### Ports
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
@@ -118,11 +120,13 @@ This stage performs:
 2. **Normalize** if MSB missing:
    - Left-shifts mantissa while adjusting exponent, carrying guard into LSB.
    - If the shift amount required to align to exponent -126 meets or exceeds the mantissa width (i.e. the true product is too small to represent even as a denormal), the mantissa must become exactly zero and the sticky bit must be set to 1. The final packed result in Stage 7 must then be an exact zero (correct sign, zero exponent field, zero fraction) — this case occurs even when multiplying two ordinary normal numbers whose product underflows completely, not just with denormal inputs.
+   - **Important:** steps 1, 2, and 3 in this stage are sequential operations that can all apply to the same result within one cycle — they are NOT mutually exclusive alternatives. Do not implement them as `if (underflow) ... else if (!normalized) ... else (round)`. A value that underflows still needs normalization/rounding logic applied to it afterward in the same cycle. Structure Stage 6 so that: first, if underflow-alignment applies, it updates the mantissa/guard/round/sticky/exponent; then, independently, check if the (possibly just-updated) mantissa needs normalization; then, independently, apply the RNE rounding check using the (possibly just-updated) guard/round/sticky bits. Use separate `if` blocks feeding into each other, not one big if/else-if/else chain.
 3. **RNE rounding**:
    - If `G == 1` and `(R || S || LSB)` then increment mantissa.
    - Handles carry-out from rounding:
      - If rounding overflows mantissa, set mantissa to 0x800000 and increment exponent.
-   - Compute the incremented mantissa in a register at least 25 bits wide so the carry-out bit is directly observable (e.g. bit 24 of a 25-bit sum). Do not detect this overflow by comparing the mantissa to an all-1s pattern before incrementing, and do not check a bit index beyond the width of a 24-bit register — both approaches will silently fail to detect the carry.
+     - Compute the incremented mantissa in a register at least 25 bits wide so the carry-out bit is directly observable (e.g. bit 24 of a 25-bit sum). Do not detect this overflow by comparing the mantissa to an all-1s pattern before incrementing, and do not check a bit index beyond the width of a 24-bit register — both approaches will silently fail to detect the carry.
+    - **The only correct way to detect rounding overflow is:** compute `{1'b0, z_m} + 25'd1` (a 25-bit-wide sum) and check bit `[24]` of that sum — if it is 1, the mantissa overflowed. Any of the following are INCORRECT and must not be used: comparing `z_m == 24'hFFFFFF` before incrementing, using a reduction-AND check like `&z_m` before incrementing, or checking any bit index on a register narrower than 25 bits. The overflow check must always happen on the post-increment sum, not the pre-increment mantissa.
 
 ### Stage 7 — Pack
 - For normal path:
@@ -133,6 +137,7 @@ This stage performs:
   - **All overflow and underflow checks must be performed on the full-width signed exponent `z_e` (the 10-bit signed register), not on an already-narrowed 8-bit biased exponent.** Narrowing `z_e + 127` into an 8-bit field before checking its range can silently wrap around for extreme exponent values, causing genuine overflow/underflow cases to be misclassified as normal.
   - If `z_e` (checked in its full signed width) indicates overflow -> output INF.
   - If `z_e` (checked in its full signed width) indicates exact denorm boundary -> force exponent field to 0 (denormal/zero representation).
+  - **At the exact boundary `z_e == -126`, the exponent field is NOT always 0.** You must check `z_m[23]` to decide: if `z_m[23] == 1`, the mantissa is normalized and this is actually the smallest representable **normal** number — pack it with biased exponent field = 1 (not 0) and fraction = `z_m[22:0]`. Only if `z_m[23] == 0` is this a true denormal or zero, in which case pack exponent field = 0 and fraction = `z_m[22:0]`. Do not unconditionally set the exponent field to 0 whenever `z_e == -126`.
 
 ---
 
