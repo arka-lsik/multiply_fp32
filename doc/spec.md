@@ -127,8 +127,7 @@ This stage performs:
    - Handles carry-out from rounding:
      - If rounding overflows mantissa, set mantissa to 0x800000 and increment exponent.
      - Compute the incremented mantissa in a register at least 25 bits wide so the carry-out bit is directly observable (e.g. bit 24 of a 25-bit sum). Do not detect this overflow by comparing the mantissa to an all-1s pattern before incrementing, and do not check a bit index beyond the width of a 24-bit register — both approaches will silently fail to detect the carry.
-    - **The only correct way to detect rounding overflow is:** compute `{1'b0, z_m} + 25'd1` (a 25-bit-wide sum) and check bit `[24]` of that sum — if it is 1, the mantissa overflowed. Any of the following are INCORRECT and must not be used: comparing `z_m == 24'hFFFFFF` before incrementing, using a reduction-AND check like `&z_m` before incrementing, or checking any bit index on a register narrower than 25 bits. The overflow check must always happen on the post-increment sum, not the pre-increment mantissa.
-
+    
 ### Stage 7 — Pack
 - For normal path:
   - Pack sign, biased exponent, fraction.
@@ -138,7 +137,7 @@ This stage performs:
   - **All overflow and underflow checks must be performed on the full-width signed exponent `z_e` (the 10-bit signed register), not on an already-narrowed 8-bit biased exponent.** Narrowing `z_e + 127` into an 8-bit field before checking its range can silently wrap around for extreme exponent values, causing genuine overflow/underflow cases to be misclassified as normal.
   - If `z_e` (checked in its full signed width) indicates overflow -> output INF.
   - If `z_e` (checked in its full signed width) indicates exact denorm boundary -> force exponent field to 0 (denormal/zero representation).
-  - **At the exact boundary `z_e == -126`, the exponent field is NOT always 0.** You must check `z_m[23]` to decide: if `z_m[23] == 1`, the mantissa is normalized and this is actually the smallest representable **normal** number — pack it with biased exponent field = 1 (not 0) and fraction = `z_m[22:0]`. Only if `z_m[23] == 0` is this a true denormal or zero, in which case pack exponent field = 0 and fraction = `z_m[22:0]`. Do not unconditionally set the exponent field to 0 whenever `z_e == -126`.
+  
 
 ---
 
