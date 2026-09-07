@@ -120,22 +120,22 @@ This stage performs:
 2. **Normalize** if MSB missing:
    - Left-shifts mantissa while adjusting exponent, carrying guard into LSB.
    - If the shift amount required to align to exponent -126 meets or exceeds the mantissa width (i.e. the true product is too small to represent even as a denormal), the mantissa must become exactly zero and the sticky bit must be set to 1. The final packed result in Stage 7 must then be an exact zero (correct sign, zero exponent field, zero fraction) — this case occurs even when multiplying two ordinary normal numbers whose product underflows completely, not just with denormal inputs.
+   - A result that underflows may still require RNE rounding applied afterward — don't treat underflow-handling and rounding as mutually exclusive outcomes that can't both occur on the same result.
    
 3. **RNE rounding**:
    - If `G == 1` and `(R || S || LSB)` then increment mantissa.
    - Handles carry-out from rounding:
      - If rounding overflows mantissa, set mantissa to 0x800000 and increment exponent.
      - Compute the incremented mantissa in a register at least 25 bits wide so the carry-out bit is directly observable (e.g. bit 24 of a 25-bit sum). Do not detect this overflow by comparing the mantissa to an all-1s pattern before incrementing, and do not check a bit index beyond the width of a 24-bit register — both approaches will silently fail to detect the carry.
+     - If you do check for an all-1s mantissa pattern as a shortcut, that check must only ever be applied to the mantissa value after the increment has been computed, never before.
     
 ### Stage 7 — Pack
 - For normal path:
   - Pack sign, biased exponent, fraction.
-  - If exponent indicates overflow -> output INF.
-  - If exponent indicates exact denorm boundary -> force exponent field to 0 (denormal/zero representation).
-- Asserts `out_valid` for one cycle and clears `busy`.
   - If `z_e` (checked in its full signed width) indicates overflow -> output INF.
   - If `z_e` (checked in its full signed width) indicates exact denorm boundary -> force exponent field to 0 (denormal/zero representation).
-  - Note: the denormal/zero boundary case requires careful handling — do not assume the exponent field is always 0 whenever the result is very small; consider whether the mantissa itself indicates a normalized or non-normalized value at that boundary. 
+  - Note: the denormal/zero boundary case requires careful handling — do not assume the exponent field is always 0 whenever the result is very small; consider whether the mantissa itself indicates a normalized or non-normalized value at that boundary.
+- Asserts `out_valid` for one cycle and clears `busy`.
 
 ---
 
