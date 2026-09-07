@@ -120,7 +120,7 @@ This stage performs:
 2. **Normalize** if MSB missing:
    - Left-shifts mantissa while adjusting exponent, carrying guard into LSB.
    - If the shift amount required to align to exponent -126 meets or exceeds the mantissa width (i.e. the true product is too small to represent even as a denormal), the mantissa must become exactly zero and the sticky bit must be set to 1. The final packed result in Stage 7 must then be an exact zero (correct sign, zero exponent field, zero fraction) — this case occurs even when multiplying two ordinary normal numbers whose product underflows completely, not just with denormal inputs.
-   - Be careful with Verilog assignment semantics when threading these steps together within one cycle — a value updated with nonblocking assignment (`<=`) is not visible until the next clock edge, so a later step in the same cycle that reads it may see a stale value from before this cycle started.
+   
 3. **RNE rounding**:
    - If `G == 1` and `(R || S || LSB)` then increment mantissa.
    - Handles carry-out from rounding:
@@ -133,7 +133,6 @@ This stage performs:
   - If exponent indicates overflow -> output INF.
   - If exponent indicates exact denorm boundary -> force exponent field to 0 (denormal/zero representation).
 - Asserts `out_valid` for one cycle and clears `busy`.
-  - **All overflow and underflow checks must be performed on the full-width signed exponent `z_e` (the 10-bit signed register), not on an already-narrowed 8-bit biased exponent.** Narrowing `z_e + 127` into an 8-bit field before checking its range can silently wrap around for extreme exponent values, causing genuine overflow/underflow cases to be misclassified as normal.
   - If `z_e` (checked in its full signed width) indicates overflow -> output INF.
   - If `z_e` (checked in its full signed width) indicates exact denorm boundary -> force exponent field to 0 (denormal/zero representation).
   
