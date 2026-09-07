@@ -121,6 +121,7 @@ This stage performs:
    - Left-shifts mantissa while adjusting exponent, carrying guard into LSB.
    - If the shift amount required to align to exponent -126 meets or exceeds the mantissa width (i.e. the true product is too small to represent even as a denormal), the mantissa must become exactly zero and the sticky bit must be set to 1. The final packed result in Stage 7 must then be an exact zero (correct sign, zero exponent field, zero fraction) — this case occurs even when multiplying two ordinary normal numbers whose product underflows completely, not just with denormal inputs.
    - A result that underflows may still require RNE rounding applied afterward — don't treat underflow-handling and rounding as mutually exclusive outcomes that can't both occur on the same result.
+   - **Concretely: a mantissa of `0xFFFFFF` (all 1s) that needs to round up must become `0x1000000` — a value that no longer fits in 24 bits.** If your carry-detection logic only ever looks at a 24-bit-wide value, this exact case will silently wrap to `0x000000` instead of correctly signaling overflow. Before finalizing your rounding logic, mentally trace through this exact input (mantissa = all 1s, rounding up) and confirm your carry bit is set correctly.
    
 3. **RNE rounding**:
    - If `G == 1` and `(R || S || LSB)` then increment mantissa.
