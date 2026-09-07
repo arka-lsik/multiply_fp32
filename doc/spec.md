@@ -127,7 +127,8 @@ This stage performs:
    - Handles carry-out from rounding:
      - If rounding overflows mantissa, set mantissa to 0x800000 and increment exponent.
      - Compute the incremented mantissa in a register at least 25 bits wide so the carry-out bit is directly observable (e.g. bit 24 of a 25-bit sum). Do not detect this overflow by comparing the mantissa to an all-1s pattern before incrementing, and do not check a bit index beyond the width of a 24-bit register — both approaches will silently fail to detect the carry.
-     - **Concretely: a mantissa of `0xFFFFFF` (all 1s) that needs to round up must become `0x1000000` — a value that no longer fits in 24 bits.** If your carry-detection logic only ever looks at a 24-bit-wide value, this exact case will silently wrap to `0x000000` instead of correctly signaling overflow. Before finalizing your rounding logic, mentally trace through this exact input (mantissa = all 1s, rounding up) and confirm your carry bit is set correctly.    
+     - If you do check for an all-1s mantissa pattern as a shortcut, that check must only ever be applied to the mantissa value after the increment has been computed, never before.
+    
 ### Stage 7 — Pack
 - For normal path:
   - Pack sign, biased exponent, fraction.
