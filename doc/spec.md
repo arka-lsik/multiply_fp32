@@ -135,7 +135,7 @@ This stage performs:
 - Asserts `out_valid` for one cycle and clears `busy`.
   - If `z_e` (checked in its full signed width) indicates overflow -> output INF.
   - If `z_e` (checked in its full signed width) indicates exact denorm boundary -> force exponent field to 0 (denormal/zero representation).
-  
+  - Note: the denormal/zero boundary case requires careful handling — do not assume the exponent field is always 0 whenever the result is very small; consider whether the mantissa itself indicates a normalized or non-normalized value at that boundary. 
 
 ---
 
