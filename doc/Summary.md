@@ -29,8 +29,9 @@ The agent consistently wrote its own hand-picked tests (1.0×1.0, 2.0×3.0, etc.
 - My first pass of edits was too Strong (I initially mentioned out the exact code pattern for one fix), which 
 pushed the pass rate to 90% {**specifying the exact register width and comparison logic in a way that mirrored the golden solution's structure**}.
 - I again thought, that back to a lighter, more general hint, which brought it to 40%.
-  - I told the agent to compute the rounded mantissa in a wider register (at least 25 bits) so it could actually detect when rounding overflows the normal 24-bit mantissa — instead of the buggy shortcut of comparing the mantissa to all-1s before incrementing it
-  - I also said that overflow and underflow checks on the exponent must happen while it's still in its full, wide form, before it gets narrowed down to the final 8-bit field — narrowing too early can wrap around and hide real overflow cases
+  - I add to the specification to compute the incremented mantissa in a register at least 25 bits wide so the carry-out bit is directly observable; do not detect overflow by comparing the pre-increment mantissa to an all-1s pattern.
+  - I also specify that overflow and underflow checks on the exponent must happen while it's still in its full, wide form, before it gets narrowed down to the final 8-bit field — narrowing too early can wrap around and hide real overflow cases
+  - A general standing note that all rounding/shift/exponent registers should carry at least one extra bit of headroom beyond their nominal field width.
 - I then added back one more general (non-code-specific) hint about the exponent boundary/overflow check, which brought the final pass rate to 70%, within the target range.
   - A concrete worked example added to the carry-out requirement — stating that a mantissa of 0xFFFFFF rounding up must become 0x1000000, and prompting the agent to mentally trace that exact case — without giving the fix itself, just forcing the agent to test against the specific failure condition
 
