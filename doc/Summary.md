@@ -31,7 +31,7 @@ across different agent attempts:
 - Examples: explicitly stating that underflow-to-zero must be exact, noting the carry-out check needs a wide-enough register, flagging that exponent comparisons should happen before narrowing and noting the denormal/normal boundary needs a mantissa check rather than an exponent-only check.
 
 **Iteration:** My first pass of edits was too explicit (I initially mentioned out the exact code pattern for one fix), which 
-pushed the pass rate to 90% $\textcolor{red}{specifying the exact register width and comparison logic in a way that mirrored the golden solution's structure}$. I again thought, that back to a lighter, more general hint, which brought it to 40%. I then 
+pushed the pass rate to 90% {**specifying \space the exact register width and comparison logic in a way that mirrored the golden solution's structure**}. I again thought, that back to a lighter, more general hint, which brought it to 40%. I then 
 added back one more general (non-code-specific) hint about the exponent boundary/overflow check, which brought the final 
 pass rate to 70%, within the target range.
 
