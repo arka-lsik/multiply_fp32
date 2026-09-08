@@ -11,13 +11,7 @@ test to fail, along with the expected vs actual output.
 
 ## **Root cause analysis**
 
-A clear pattern emerged very quickly. In almost every failing run, the agent followed the same general workflow: it read the 
-specification, wrote an implementation, then wrote its own testbench with a handful of simple, hand-picked test values such 
-as 1.0 times 1.0, 2.0 times 3.0, and similar round numbers. All of these self-written tests passed, and the agent then 
-confidently declared the implementation complete and submitted it. However, the actual hidden grading test used randomly 
-generated FP32 inputs, and this exposed several real bugs that the agent's own limited testing never had a chance to catch, 
-since none of its hand-picked values happened to trigger the edge cases involved. I found the same handful of bugs repeating 
-across different agent attempts:
+The agent consistently wrote its own hand-picked tests (1.0×1.0, 2.0×3.0, etc.), passed all of them, and submitted confidently — but the hidden test uses random FP32 inputs, which exposed bugs the agent never tested for. I observed the same of bugs repeating across different agent attempts:
 
 - *Zero-underflow handling* — when a multiplication result is too small to represent even as a denormal, the agent often failed to output an exact zero.
 - *Rounding carry-out bug* — when the mantissa overflows during round-to-nearest-even (e.g. 0xFFFFFF rounding up), several agents checked the overflow condition on a register too narrow to hold the carry bit, so it silently failed to detect.
