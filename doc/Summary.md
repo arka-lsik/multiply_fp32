@@ -32,7 +32,7 @@ across different agent attempts:
 
 **Iteration:** 
 - My first pass of edits was too explicit (I initially mentioned out the exact code pattern for one fix), which 
-pushed the pass rate to 90% {**specifying \space the exact register width and comparison logic in a way that mirrored the golden solution's structure**}.
+pushed the pass rate to 90% {**specifying the exact register width and comparison logic in a way that mirrored the golden solution's structure**}.
 - I again thought, that back to a lighter, more general hint, which brought it to 40%.
   - I told the agent to compute the rounded mantissa in a wider register (at least 25 bits) so it could actually detect when rounding overflows the normal 24-bit mantissa — instead of the buggy shortcut of comparing the mantissa to all-1s before incrementing it
   - I also said that overflow and underflow checks on the exponent must happen while it's still in its full, wide form, before it gets narrowed down to the final 8-bit field — narrowing too early can wrap around and hide real overflow cases
