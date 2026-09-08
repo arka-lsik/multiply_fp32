@@ -35,3 +35,4 @@ pushed the pass rate to 90% {**specifying the exact register width and compariso
 - I then added back one more general (non-code-specific) hint about the exponent boundary/overflow check, which brought the final pass rate to 70%, within the target range.
   - A concrete worked example added to the carry-out requirement — stating that a mantissa of 0xFFFFFF rounding up must become 0x1000000, and prompting the agent to mentally trace that exact case — without giving the fix itself, just forcing the agent to test against the specific failure condition
 
+For accurate changes please look for spec.md . There at stage 6 and 7 most of the changes have been done.
