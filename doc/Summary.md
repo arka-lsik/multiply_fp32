@@ -24,7 +24,7 @@ The agent consistently wrote its own hand-picked tests (1.0×1.0, 2.0×3.0, etc.
 - I added some targeted clarifications to Stage 6 and Stage 7 each of the above — without pasting in the golden solution's exact code.
 
 **Iteration:** 
-- My first pass of edits was too explicit (I initially mentioned out the exact code pattern for one fix), which 
+- My first pass of edits was too Strong (I initially mentioned out the exact code pattern for one fix), which 
 pushed the pass rate to 90% {**specifying the exact register width and comparison logic in a way that mirrored the golden solution's structure**}.
 - I again thought, that back to a lighter, more general hint, which brought it to 40%.
   - I told the agent to compute the rounded mantissa in a wider register (at least 25 bits) so it could actually detect when rounding overflows the normal 24-bit mantissa — instead of the buggy shortcut of comparing the mantissa to all-1s before incrementing it
