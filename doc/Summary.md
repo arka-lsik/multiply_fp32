@@ -1,3 +1,5 @@
+# Summary
+
 ## **Background and starting point**
 
 - The task was to analyze why an AI coding agent was only achieving around a 10% pass rate on this FP32 multiplier
