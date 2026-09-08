@@ -19,10 +19,19 @@ generated FP32 inputs, and this exposed several real bugs that the agent's own l
 since none of its hand-picked values happened to trigger the edge cases involved. I found the same handful of bugs repeating 
 across different agent attempts:
 
-- <U>Zero-underflow handling</U> — when a multiplication result is too small to represent even as a denormal, the agent often failed to output an exact zero.
-- Rounding carry-out bug — when the mantissa overflows during round-to-nearest-even (e.g. 0xFFFFFF rounding up), several agents checked the overflow condition on a register too narrow to hold the carry bit, so it silently failed to detect.
-- Exponent range checks done too late — agents often checked for overflow/underflow after narrowing the exponent to its final 8-bit packed width, which can wrap around and hide genuine overflow cases.
-- Sequential vs. exclusive logic — the normalize/round steps in the spec are described as three separate actions, but agents often implemented them as mutually exclusive if/else branches, so a value that needed both underflow-alignment and rounding only got one or the other.
-- Denormal/normal boundary confusion — at the exact boundary between denormal and normal numbers, agents often packed the wrong exponent field depending on whether the mantissa was actually normalized.
+- *Zero-underflow handling* — when a multiplication result is too small to represent even as a denormal, the agent often failed to output an exact zero.
+- *Rounding carry-out bug* — when the mantissa overflows during round-to-nearest-even (e.g. 0xFFFFFF rounding up), several agents checked the overflow condition on a register too narrow to hold the carry bit, so it silently failed to detect.
+- *Exponent range checks done too late* — agents often checked for overflow/underflow after narrowing the exponent to its final 8-bit packed width, which can wrap around and hide genuine overflow cases.
+- *Sequential vs. exclusive logic* — the normalize/round steps in the spec are described as three separate actions, but agents often implemented them as mutually exclusive if/else branches, so a value that needed both underflow-alignment and rounding only got one or the other.
+- *Denormal/normal boundary confusion* — at the exact boundary between denormal and normal numbers, agents often packed the wrong exponent field depending on whether the mantissa was actually normalized.
 
+## **What I changed in**
+
+- I added some targeted clarifications to Stage 6 and Stage 7 each of the above — without pasting in the golden solution's exact code.
+- Examples: explicitly stating that underflow-to-zero must be exact, noting the carry-out check needs a wide-enough register, flagging that exponent comparisons should happen before narrowing and noting the denormal/normal boundary needs a mantissa check rather than an exponent-only check.
+
+**Iteration:** My first pass of edits was too explicit (I initially mentioned out the exact code pattern for one fix), which 
+pushed the pass rate to 90%. I again thought, that back to a lighter, more general hint, which brought it to 40%. I then 
+added back one more general (non-code-specific) hint about the exponent boundary/overflow check, which brought the final 
+pass rate to 70%, within the target range.
 
