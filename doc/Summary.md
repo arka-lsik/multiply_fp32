@@ -22,7 +22,6 @@ The agent consistently wrote its own hand-picked tests (1.0×1.0, 2.0×3.0, etc.
 ## **What I changed in**
 
 - I added some targeted clarifications to Stage 6 and Stage 7 each of the above — without pasting in the golden solution's exact code.
-- Examples: explicitly stating that underflow-to-zero must be exact, noting the carry-out check needs a wide-enough register, flagging that exponent comparisons should happen before narrowing and noting the denormal/normal boundary needs a mantissa check rather than an exponent-only check.
 
 **Iteration:** 
 - My first pass of edits was too explicit (I initially mentioned out the exact code pattern for one fix), which 
