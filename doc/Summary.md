@@ -19,7 +19,7 @@ generated FP32 inputs, and this exposed several real bugs that the agent's own l
 since none of its hand-picked values happened to trigger the edge cases involved. I found the same handful of bugs repeating 
 across different agent attempts:
 
-- Zero-underflow handling — when a multiplication result is too small to represent even as a denormal, the agent often failed to output an exact zero.
+- <u>Zero-underflow handling</u> — when a multiplication result is too small to represent even as a denormal, the agent often failed to output an exact zero.
 - Rounding carry-out bug — when the mantissa overflows during round-to-nearest-even (e.g. 0xFFFFFF rounding up), several agents checked the overflow condition on a register too narrow to hold the carry bit, so it silently failed to detect.
 - Exponent range checks done too late — agents often checked for overflow/underflow after narrowing the exponent to its final 8-bit packed width, which can wrap around and hide genuine overflow cases.
 - Sequential vs. exclusive logic — the normalize/round steps in the spec are described as three separate actions, but agents often implemented them as mutually exclusive if/else branches, so a value that needed both underflow-alignment and rounding only got one or the other.
