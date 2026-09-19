@@ -1,4 +1,4 @@
-# Takehome: Improving an AI Agent's Pass Rate on a Hardware Design Task
+# Improving an AI Agent's Pass Rate on a Hardware Design Task
 
 ## Background
 
